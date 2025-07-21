@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66a3b26c38164fe4ea26e7ea923ac59e, type: 3}
+  m_Name: CharacterList
+  m_EditorClassIdentifier: 
+  _characterViewPairs:
+  - _character:
+      rid: 7754533912340594688
+    _characterView: {fileID: 2038836334573871623, guid: 1aa1179e3b5af1849b45729858e2d0c2, type: 3}
+  - _character:
+      rid: 7754533912340594689
+    _characterView: {fileID: -2937729099556469774, guid: ad827e6dedcba9a4e8f2a4286777382f, type: 3}
+  - _character:
+      rid: 8545712511737659392
+    _characterView: {fileID: 2038836334573871623, guid: a096c492b076f4e47bcc1e5781c230aa, type: 3}
+  - _character:
+      rid: 8545712511737659393
+    _characterView: {fileID: 2038836334573871623, guid: 7392e0980abb4a5498bab4b018cd57f2, type: 3}
+  references:
+    version: 2
+    RefIds:
+    - rid: 7754533912340594688
+      type: {class: CharacterA, ns: Automan.Game, asm: Assembly-CSharp}
+      data: 
+    - rid: 7754533912340594689
+      type: {class: CharacterB, ns: Automan.Game, asm: Assembly-CSharp}
+      data: 
+    - rid: 8545712511737659392
+      type: {class: PositiveCharacter, ns: Automan.Game, asm: Assembly-CSharp}
+      data: 
+    - rid: 8545712511737659393
+      type: {class: NegativeCharacter, ns: Automan.Game, asm: Assembly-CSharp}
+      data: 
