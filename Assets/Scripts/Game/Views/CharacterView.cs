@@ -78,7 +78,7 @@ namespace Automan.Game.View
         /// 初期遷移する
         /// </summary>
         /// <param name="initialDelay">遷移開始時の遅延時間</param>
-        public async UniTaskVoid InitialTransition(float initialDelay)
+        public async UniTaskVoid InitialTransitionAsync(float initialDelay)
         {
             if (!_isAlive) return;
 
@@ -102,7 +102,7 @@ namespace Automan.Game.View
         /// 文字を非表示にする
         /// </summary>
         /// <returns></returns>
-        public async UniTaskVoid Hide()
+        public async UniTaskVoid HideAsync()
         {
             _isAlive = false;
 
@@ -134,11 +134,11 @@ namespace Automan.Game.View
 
                     if (from == to)
                     {
-                        await TransitionSelf(from, from + Vector3.Normalize(from - _centerPosition) * _selfTransitionLength, token);
+                        await SelfTransitionAsync(from, from + Vector3.Normalize(from - _centerPosition) * _selfTransitionLength, token);
                     }
                     else
                     {
-                        await Transition(from, to, token);
+                        await TransitionAsync(from, to, token);
                     }
 
                     if (count > _index)
@@ -163,7 +163,7 @@ namespace Automan.Game.View
             }, destroyCancellationToken);
         }
 
-        private async UniTask Transition(Vector3 from, Vector3 to, CancellationToken cancellationToken = default)
+        private async UniTask TransitionAsync(Vector3 from, Vector3 to, CancellationToken cancellationToken = default)
         {
             var transition = LMotion.Create(from, to, _transitionDuration)
                         .WithEase(Ease.InOutQuad)
@@ -196,7 +196,7 @@ namespace Automan.Game.View
             await UniTask.WhenAll(transition, rotation);
         }
 
-        private async UniTask TransitionSelf(Vector3 from, Vector3 to, CancellationToken cancellationToken = default)
+        private async UniTask SelfTransitionAsync(Vector3 from, Vector3 to, CancellationToken cancellationToken = default)
         {
             var transition = LMotion.Create(from, to, _transitionDuration / 2)
                         .WithEase(Ease.InQuad)

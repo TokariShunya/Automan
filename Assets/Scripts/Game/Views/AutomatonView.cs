@@ -162,7 +162,7 @@ namespace Automan.Game.View
 
             if (stateView != null)
             {
-                stateView.Highlight(isCorrect).Forget();
+                stateView.HighlightAsync(isCorrect).Forget();
             }
         }
 

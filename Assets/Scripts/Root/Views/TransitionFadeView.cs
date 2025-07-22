@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using LitMotion;
 using LitMotion.Extensions;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Automan.Root.View
 {
@@ -18,8 +19,11 @@ namespace Automan.Root.View
         /// フェードアウトする
         /// </summary>
         /// <param name="color">フェードの色</param>
-        public async UniTask FadeOutAsync(Color color)
+        /// <param name="cancellationToken">キャンセルトークン</param>
+        public async UniTask FadeOutAsync(Color color, CancellationToken cancellationToken = default)
         {
+            using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, destroyCancellationToken);
+
             _fadePanel.color = color;
 
             gameObject.SetActive(true);
@@ -28,22 +32,25 @@ namespace Automan.Root.View
                 .WithEase(Ease.InOutQuad)
                 .BindToColorA(_fadePanel)
                 .AddTo(gameObject)
-                .ToUniTask(destroyCancellationToken);
+                .ToUniTask(source.Token);
         }
 
         /// <summary>
         /// フェードインする
         /// </summary>
         /// <param name="color">フェードの色</param>
-        public async UniTask FadeInAsync(Color color)
+        /// <param name="cancellationToken">キャンセルトークン</param>
+        public async UniTask FadeInAsync(Color color, CancellationToken cancellationToken = default)
         {
+            using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, destroyCancellationToken);
+
             _fadePanel.color = color;
 
             await LMotion.Create(1f, 0f, _fadeDuration)
                 .WithEase(Ease.InOutQuad)
                 .BindToColorA(_fadePanel)
                 .AddTo(gameObject)
-                .ToUniTask(destroyCancellationToken);
+                .ToUniTask(source.Token);
 
             gameObject.SetActive(false);
         }

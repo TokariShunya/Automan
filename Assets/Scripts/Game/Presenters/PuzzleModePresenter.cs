@@ -24,6 +24,7 @@ namespace Automan.Game.Presenter
     public sealed class PuzzleModePresenter : IStartable, IDisposable
     {
         private readonly TransitionManager _transitionManager;
+        private readonly SoundManager _soundManager;
         private readonly LifeModel _lifeModel;
         private readonly StageModel _stageModel;
         private readonly StringGeneratorService _stringGeneratorService;
@@ -41,6 +42,7 @@ namespace Automan.Game.Presenter
         /// コンストラクタ
         /// </summary>
         /// <param name="transitionManager">シーン遷移マネージャー</param>
+        /// <param name="soundManager">サウンドマネージャー</param>
         /// <param name="lifeModel">ライフのModel</param>
         /// <param name="stageModel">ステージのModel</param>
         /// <param name="stringGeneratorService">文字列Model生成器</param>
@@ -52,9 +54,10 @@ namespace Automan.Game.Presenter
         /// <param name="startButton">スタートボタン</param>
         /// <param name="gameoverButtonsView">ゲームオーバー時のボタンのView</param>
         [Inject]
-        public PuzzleModePresenter(TransitionManager transitionManager, LifeModel lifeModel, StageModel stageModel, StringGeneratorService stringGeneratorService, StringViewFactory stringViewFactory, AutomatonView automatonView, LifeView lifeView, FrameView frameView, InformationTextView informationTextView, Button startButton, GameoverButtonsView gameoverButtonsView)
+        public PuzzleModePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, StageModel stageModel, StringGeneratorService stringGeneratorService, StringViewFactory stringViewFactory, AutomatonView automatonView, LifeView lifeView, FrameView frameView, InformationTextView informationTextView, Button startButton, GameoverButtonsView gameoverButtonsView)
         {
             _transitionManager = transitionManager;
+            _soundManager = soundManager;
             _lifeModel = lifeModel;
             _stageModel = stageModel;
             _stringGeneratorService = stringGeneratorService;
@@ -126,12 +129,14 @@ namespace Automan.Game.Presenter
             await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: _cancellationTokenSource.Token);
 
             // ステージ番号を表示
+            _soundManager.Play(SoundManager.Sound.Stage);
             await _informationTextView.ShowStageInformationAsync(1f, _cancellationTokenSource.Token);
 
             _stringViewFactory.Show();
 
             // スタートボタンが押されるまで待機
             await _startButton.OnClickAsync(_cancellationTokenSource.Token);
+            _soundManager.Play(SoundManager.Sound.Start);
             _startButton.gameObject.SetActive(false);
 
             // 状態を固定
@@ -151,6 +156,7 @@ namespace Automan.Game.Presenter
             if (_lifeModel.IsSurvived)
             {
                 // クリア演出
+                _soundManager.Play(SoundManager.Sound.ClearJingle);
                 _frameView.Shine();
                 await _informationTextView.ShowClearInformationAsync(_stageModel.IsPerfect, _cancellationTokenSource.Token);
 
@@ -159,29 +165,33 @@ namespace Automan.Game.Presenter
                 if (_stageModel.CurrentStageNumber >= _stageModel.StageCount)
                 {
                     // オールクリア
-                    await _transitionManager.TransitionTo(TransitionManager.Scene.Result, Color.white);
+                    _soundManager.Play(SoundManager.Sound.Transition);
+                    await _transitionManager.TransitionToAsync(TransitionManager.Scene.Result, Color.white);
                 }
                 else
                 {
                     // 次のステージへ遷移
-                    await _transitionManager.TransitionTo(_stageModel.CurrentStageNumber + 1, Color.white);
+                    _soundManager.Play(SoundManager.Sound.Transition);
+                    await _transitionManager.TransitionToAsync(_stageModel.CurrentStageNumber + 1, Color.white);
                 } 
             }
             else
             {
                 // ゲームオーバー演出
+                _soundManager.Play(SoundManager.Sound.GameoverJingle);
                 _frameView.Blink();
                 await _informationTextView.ShowGameoverInformationAsync(_cancellationTokenSource.Token);
 
-                await _gameoverButtonsView.Show(_cancellationTokenSource.Token);
+                await _gameoverButtonsView.ShowAsync(_cancellationTokenSource.Token);
 
                 // リトライボタン処理
                 _gameoverButtonsView.OnRetryButtonClick
                     .Subscribe(async _ =>
                     {
+                        _soundManager.Play(SoundManager.Sound.Button);
                         _gameoverButtonsView.Hide();
                         _lifeModel.Initialize();
-                        await _transitionManager.TransitionTo(1);
+                        await _transitionManager.TransitionToAsync(1, Color.black);
                     })
                     .RegisterTo(_cancellationTokenSource.Token);
 
@@ -189,8 +199,9 @@ namespace Automan.Game.Presenter
                 _gameoverButtonsView.OnTitleButtonClick
                     .Subscribe(async _ =>
                     {
+                        _soundManager.Play(SoundManager.Sound.Button);
                         _gameoverButtonsView.Hide();
-                        await _transitionManager.TransitionTo(TransitionManager.Scene.Title);
+                        await _transitionManager.TransitionToAsync(TransitionManager.Scene.Title, Color.black);
                     })
                     .RegisterTo(_cancellationTokenSource.Token);
             } 
@@ -230,8 +241,13 @@ namespace Automan.Game.Presenter
 
                     if (!isCorrect)
                     {
+                        _soundManager.Play(SoundManager.Sound.Error);
                         _lifeModel.Damage();
                         _stageModel.ErrorCount++;
+                    }
+                    else
+                    {
+                        _soundManager.Play(SoundManager.Sound.Correct);
                     }
                 }
             }

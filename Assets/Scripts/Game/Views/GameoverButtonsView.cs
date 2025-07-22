@@ -32,7 +32,7 @@ namespace Automan.Game.View
         /// ボタンを表示する
         /// </summary>
         /// <param name="cancellationToken">キャンセルトークン</param>
-        public async UniTask Show(CancellationToken cancellationToken = default)
+        public async UniTask ShowAsync(CancellationToken cancellationToken = default)
         {
             using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, destroyCancellationToken);
 

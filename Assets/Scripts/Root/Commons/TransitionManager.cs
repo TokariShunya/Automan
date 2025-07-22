@@ -1,16 +1,19 @@
 using System;
+using System.Threading;
 using Automan.Root.View;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Cysharp.Threading.Tasks;
 using VContainer;
 
+#nullable enable
+
 namespace Automan.Root
 {
     /// <summary>
     /// シーン遷移マネージャー
     /// </summary>
-    public sealed class TransitionManager
+    public sealed class TransitionManager : IDisposable
     {
         private readonly TransitionFadeView _transitionFadeView;
 
@@ -23,7 +26,9 @@ namespace Automan.Root
             Result,
         }
 
-        private readonly string _stageScenePrefix = "Stage";
+        private readonly string StageScenePrefix = "Stage";
+
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
 
         /// <summary>
         /// コンストラクタ
@@ -40,9 +45,9 @@ namespace Automan.Root
         /// </summary>
         /// <param name="scene">シーン定義</param>
         /// <param name="fadeColor">フェードの色</param>
-        public async UniTask TransitionTo(Scene scene, Color fadeColor = default)
+        public async UniTask TransitionToAsync(Scene scene, Color fadeColor = default)
         {
-            await TransitionTo(scene.GetSceneName(), fadeColor);
+            await TransitionToAsync(scene.GetSceneName(), fadeColor);
         }
 
         /// <summary>
@@ -50,16 +55,22 @@ namespace Automan.Root
         /// </summary>
         /// <param name="stageNumber">ステージ番号</param>
         /// <param name="fadeColor">フェードの色</param>
-        public async UniTask TransitionTo(int stageNumber, Color fadeColor = default)
+        public async UniTask TransitionToAsync(int stageNumber, Color fadeColor = default)
         {
-            await TransitionTo($"{_stageScenePrefix}{stageNumber}", fadeColor);
+            await TransitionToAsync($"{StageScenePrefix}{stageNumber}", fadeColor);
         }
 
-        private async UniTask TransitionTo(string sceneName, Color fadeColor = default)
+        private async UniTask TransitionToAsync(string sceneName, Color fadeColor)
         {
-            await _transitionFadeView.FadeOutAsync(fadeColor);
-            await SceneManager.LoadSceneAsync(sceneName);
-            await _transitionFadeView.FadeInAsync(fadeColor);
+            await _transitionFadeView.FadeOutAsync(fadeColor, _cancellationTokenSource.Token);
+            await SceneManager.LoadSceneAsync(sceneName).ToUniTask(cancellationToken: _cancellationTokenSource.Token);
+            await _transitionFadeView.FadeInAsync(fadeColor, _cancellationTokenSource.Token);
+        }
+
+        public void Dispose()
+        {
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
         }
     }
 

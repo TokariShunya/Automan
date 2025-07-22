@@ -49,7 +49,7 @@ namespace Automan.Game.View
             foreach (var characterView in _characterViews)
             {
                 characterView.EnqueueTransition(to);
-                characterView.InitialTransition(delay).Forget();
+                characterView.InitialTransitionAsync(delay).Forget();
                 delay += _initialDelayStep;
             }
         }
@@ -87,7 +87,7 @@ namespace Automan.Game.View
 
             await _characterViews[_count].OnCompleted.AttachExternalCancellation(source.Token);
 
-            _characterViews[_count++].Hide().Forget();
+            _characterViews[_count++].HideAsync().Forget();
         }
     }
 }

@@ -80,7 +80,7 @@ namespace Automan.Game.View
         /// ハイライトする
         /// </summary>
         /// <param name="isCorrect">判定</param>
-        public async UniTaskVoid Highlight(bool isCorrect)
+        public async UniTaskVoid HighlightAsync(bool isCorrect)
         {
             await LMotion.Create(0.5f, isCorrect ? _correctHighlightMultiplication : _errorHighlightMultiplication, _highlightFadeDuration)
                 .WithEase(Ease.InOutQuad)

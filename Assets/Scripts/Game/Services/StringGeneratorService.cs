@@ -15,7 +15,7 @@ namespace Automan.Game.Service
     {
         private readonly CharacterList _characterList;
 
-        private readonly int _maxAttempt = 100;
+        private readonly int MaxAttempt = 100;
 
         /// <summary>
         /// コンストラクタ
@@ -50,8 +50,6 @@ namespace Automan.Game.Service
             var positiveCount = stringCount / 2;
             var negativeCount = stringCount / 2;
 
-            var count = 0;
-
             if (positiveCount + negativeCount < stringCount)
             {
                 if (Random.value < 0.5f)
@@ -64,7 +62,9 @@ namespace Automan.Game.Service
                 }
             }
 
-            for (int i = 0; i < _maxAttempt; i++)
+            var count = 0;
+
+            for (int i = 0; i < MaxAttempt && count < stateCount; i++)
             {
                 var length = Random.Range(stringLengthRange.Min, stringLengthRange.Max + 1);
                 var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
@@ -96,8 +96,6 @@ namespace Automan.Game.Service
                         }
                     }
                 }
-
-                if (count >= stringCount) break;
             }
 
             while (count < stringCount)

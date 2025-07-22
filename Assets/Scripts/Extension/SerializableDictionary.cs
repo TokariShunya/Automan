@@ -17,13 +17,14 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
         }
     }
 
-    [SerializeField] List<SerializableKeyValuePair> _list;
+    [SerializeField] List<SerializableKeyValuePair> _list = new ();
 
     public virtual TKey DefaultKey => default;
 
     void ISerializationCallbackReceiver.OnAfterDeserialize()
     {
-        Clear();
+        this.Clear();
+
         foreach (var item in _list)
         {
             this[ContainsKey(item.Key) ? DefaultKey : item.Key] = item.Value;
@@ -32,7 +33,8 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
 
     void ISerializationCallbackReceiver.OnBeforeSerialize()
     {
-        _list = new List<SerializableKeyValuePair>(Count);
+        _list.Clear();
+
         foreach (var pair in this)
         {
             _list.Add(new SerializableKeyValuePair(pair.Key, pair.Value));

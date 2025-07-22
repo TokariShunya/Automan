@@ -3,6 +3,7 @@ using System.Threading;
 using Automan.Root;
 using Automan.Root.Model;
 using Automan.Root.View;
+using UnityEngine;
 using Cysharp.Threading.Tasks;
 using R3;
 using VContainer;
@@ -18,6 +19,7 @@ namespace Automan.Title.Presenter
     public sealed class TitlePresenter : IStartable, IDisposable
     {
         private readonly TransitionManager _transitionManager;
+        private readonly SoundManager _soundManager;
         private readonly LifeModel _lifeModel;
         private readonly HoverButton _playButton;
 
@@ -27,12 +29,14 @@ namespace Automan.Title.Presenter
         /// コンストラクタ
         /// </summary>
         /// <param name="transitionManager">シーン遷移マネージャー</param>
+        /// <param name="soundManager">サウンドマネージャー</param>
         /// <param name="lifeModel">ライフのModel</param>
         /// <param name="playButton">プレイボタン</param>
         [Inject]
-        public TitlePresenter(TransitionManager transitionManager, LifeModel lifeModel, HoverButton playButton)
+        public TitlePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, HoverButton playButton)
         {
             _transitionManager = transitionManager;
+            _soundManager = soundManager;
             _lifeModel = lifeModel;
             _playButton = playButton;
         }
@@ -55,11 +59,12 @@ namespace Automan.Title.Presenter
             {
                 return;
             }
-            
+
+            _soundManager.Play(SoundManager.Sound.Button);
             _playButton.gameObject.SetActive(false);
 
             _lifeModel.Initialize();
-            await _transitionManager.TransitionTo(1);
+            await _transitionManager.TransitionToAsync(1, Color.black);
         }
 
         /// <summary>
