@@ -15,7 +15,7 @@ namespace Automan.Game.Service
     {
         private readonly CharacterList _characterList;
 
-        private readonly int _maxAttempt = 1000;
+        private readonly int _maxAttempt = 100;
 
         /// <summary>
         /// コンストラクタ
@@ -47,8 +47,8 @@ namespace Automan.Game.Service
             HashSet<string> positiveStrings = new ();
             HashSet<string> negativeStrings = new ();
 
-            var positiveCount = stateCount / 2;
-            var negativeCount = stateCount / 2;
+            var positiveCount = stringCount / 2;
+            var negativeCount = stringCount / 2;
 
             var count = 0;
 
@@ -100,12 +100,22 @@ namespace Automan.Game.Service
                 if (count >= stringCount) break;
             }
 
-            for (int i = 0; i < stringCount - count; i++)
+            while (count < stringCount)
             {
                 var length = Random.Range(stringLengthRange.Min, stringLengthRange.Max + 1);
                 var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
 
-                (_, AutomatonString newString, _) = GenerateRandomString(automaton, characters, length, checkedCharacterCount);
+                (string text, AutomatonString newString, bool isPositive) = GenerateRandomString(automaton, characters, length, checkedCharacterCount);
+
+                if (isPositive)
+                {
+                    if (positiveStrings.Contains(text)) continue;
+                }
+                else
+                {
+                    if (negativeStrings.Contains(text)) continue;
+                }
+
                 newStrings[count++] = newString;
             }
 
@@ -164,6 +174,7 @@ namespace Automan.Game.Service
             HashSet<int> checkedCharacters = Enumerable.Range(0, length).Shuffle().Take(checkedCharacterCount - 1).Append(length).ToHashSet();
 
             AutomatonString randomString = new (randomCharacters);
+            string stringText = randomString.ToString();
 
             var index = 0;
             List<AutomatonCharacter> newCharacters = new ();
@@ -185,7 +196,7 @@ namespace Automan.Game.Service
                 }
             }
 
-            return (randomString.ToString(), new AutomatonString(newCharacters), automaton.IsInPositiveState);
+            return (stringText, new AutomatonString(newCharacters), automaton.IsInPositiveState);
         }
     }
 }
