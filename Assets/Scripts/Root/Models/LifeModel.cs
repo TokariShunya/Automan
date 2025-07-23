@@ -22,6 +22,11 @@ namespace Automan.Root.Model
         public bool IsSurvived => _life.CurrentValue > 0;
 
         /// <summary>
+        /// 初期ライフ
+        /// </summary>
+        public int InitialLife => 3;
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
         public LifeModel()
@@ -34,7 +39,7 @@ namespace Automan.Root.Model
         /// </summary>
         public void Initialize()
         {
-            _life.Value = 3;
+            _life.Value = InitialLife;
         }
 
         /// <summary>

@@ -26,11 +26,13 @@ namespace Automan.Game.Presenter
         private readonly TransitionManager _transitionManager;
         private readonly SoundManager _soundManager;
         private readonly LifeModel _lifeModel;
+        private readonly TimeModel _timeModel;
         private readonly StageModel _stageModel;
         private readonly StringGeneratorService _stringGeneratorService;
         private readonly StringViewFactory _stringViewFactory;
         private readonly AutomatonView _automatonView;
         private readonly LifeView _lifeView;
+        private readonly TimeView _timeView;
         private readonly FrameView _frameView;
         private readonly InformationTextView _informationTextView;
         private readonly Button _startButton;
@@ -44,6 +46,7 @@ namespace Automan.Game.Presenter
         /// <param name="transitionManager">シーン遷移マネージャー</param>
         /// <param name="soundManager">サウンドマネージャー</param>
         /// <param name="lifeModel">ライフのModel</param>
+        /// <param name="timeModel">時間のModel</param>
         /// <param name="stageModel">ステージのModel</param>
         /// <param name="stringGeneratorService">文字列Model生成器</param>
         /// <param name="stringViewFactory">文字列View生成器</param>
@@ -54,16 +57,18 @@ namespace Automan.Game.Presenter
         /// <param name="startButton">スタートボタン</param>
         /// <param name="gameoverButtonsView">ゲームオーバー時のボタンのView</param>
         [Inject]
-        public PuzzleModePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, StageModel stageModel, StringGeneratorService stringGeneratorService, StringViewFactory stringViewFactory, AutomatonView automatonView, LifeView lifeView, FrameView frameView, InformationTextView informationTextView, Button startButton, GameoverButtonsView gameoverButtonsView)
+        public PuzzleModePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, TimeModel timeModel, StageModel stageModel, StringGeneratorService stringGeneratorService, StringViewFactory stringViewFactory, AutomatonView automatonView, LifeView lifeView, TimeView timeView, FrameView frameView, InformationTextView informationTextView, Button startButton, GameoverButtonsView gameoverButtonsView)
         {
             _transitionManager = transitionManager;
             _soundManager = soundManager;
             _lifeModel = lifeModel;
+            _timeModel = timeModel;
             _stageModel = stageModel;
             _stringGeneratorService = stringGeneratorService;
             _stringViewFactory = stringViewFactory;
             _automatonView = automatonView;
             _lifeView = lifeView;
+            _timeView = timeView;
             _frameView = frameView;
             _informationTextView = informationTextView;
             _startButton = startButton;
@@ -116,6 +121,14 @@ namespace Automan.Game.Presenter
                     automaton.ChangeTransition(transition.State, transition.Character, transition.Destination);
                 })
                 .RegisterTo(_cancellationTokenSource.Token);
+            
+            // 経過時間の変更イベントを購読し，Viewに反映
+            IDisposable timeViewDisposable = _timeModel.Time
+                .Subscribe(time =>
+                {
+                    _timeView.SetTime(time);
+                });
+            timeViewDisposable.RegisterTo(_cancellationTokenSource.Token);
 
             // 文字列生成の設定を取得
             var stringConfiguration = _stageModel.StageStringConfiguration;
@@ -134,11 +147,23 @@ namespace Automan.Game.Presenter
 
             _stringViewFactory.Show();
 
+            // 時間開始
+            IDisposable timeUpdateDisposable = Observable.EveryUpdate()
+                .Subscribe(_ =>
+                {
+                    _timeModel.UpdateTime(Time.deltaTime);
+                });
+            timeUpdateDisposable.RegisterTo(_cancellationTokenSource.Token);
+
             // スタートボタンが押されるまで待機
             await _startButton.OnClickAsync(_cancellationTokenSource.Token);
-            _soundManager.Play(SoundManager.Sound.Start);
             _startButton.gameObject.SetActive(false);
 
+            // 時間を止める
+            timeUpdateDisposable.Dispose();
+            timeViewDisposable.Dispose();
+            _soundManager.Play(SoundManager.Sound.Start);
+            
             // 状態を固定
             _automatonView.FixStates();
 
@@ -191,6 +216,7 @@ namespace Automan.Game.Presenter
                         _soundManager.Play(SoundManager.Sound.Button);
                         _gameoverButtonsView.Hide();
                         _lifeModel.Initialize();
+                        _timeModel.Initialize();
                         await _transitionManager.TransitionToAsync(1, Color.black);
                     })
                     .RegisterTo(_cancellationTokenSource.Token);

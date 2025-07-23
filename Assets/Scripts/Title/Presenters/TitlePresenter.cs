@@ -21,6 +21,7 @@ namespace Automan.Title.Presenter
         private readonly TransitionManager _transitionManager;
         private readonly SoundManager _soundManager;
         private readonly LifeModel _lifeModel;
+        private readonly TimeModel _timeModel;
         private readonly HoverButton _playButton;
 
         private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -31,13 +32,15 @@ namespace Automan.Title.Presenter
         /// <param name="transitionManager">シーン遷移マネージャー</param>
         /// <param name="soundManager">サウンドマネージャー</param>
         /// <param name="lifeModel">ライフのModel</param>
+        /// <param name="timeModel">時間のModel</param>
         /// <param name="playButton">プレイボタン</param>
         [Inject]
-        public TitlePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, HoverButton playButton)
+        public TitlePresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, TimeModel timeModel, HoverButton playButton)
         {
             _transitionManager = transitionManager;
             _soundManager = soundManager;
             _lifeModel = lifeModel;
+            _timeModel = timeModel;
             _playButton = playButton;
         }
 
@@ -64,6 +67,7 @@ namespace Automan.Title.Presenter
             _playButton.gameObject.SetActive(false);
 
             _lifeModel.Initialize();
+            _timeModel.Initialize();
             await _transitionManager.TransitionToAsync(1, Color.black);
         }
 

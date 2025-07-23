@@ -41,9 +41,6 @@ namespace Automan.Game.Service
             // オートマトンをランダムに生成
             AutomatonModel automaton = GenerateRandomAutomaton(stateCount, characters);
 
-            // 正例の生成数
-            var positiveCount = stringCount / 2 + (stringCount % 2 == 1 ? Random.Range(0, 2) : 0);
-
             List<(AutomatonCharacter[] Characters, bool[] CheckedPoints)> positiveStrings = new ();
             List<(AutomatonCharacter[] Characters, bool[] CheckedPoints)> negativeStrings = new ();
 
@@ -61,6 +58,19 @@ namespace Automan.Game.Service
             Debug.Log($"Positive Strings: {positiveStrings.Count}");
             Debug.Log($"Negative Strings: {negativeStrings.Count}");
             Debug.Log($"Total Strings: {positiveStrings.Count + negativeStrings.Count}");
+
+            // 正例の生成数
+            var positiveCount = stringCount / 2 + (stringCount % 2 == 1 ? Random.Range(0, 2) : 0);
+
+            if (positiveStrings.Count < positiveCount)
+            {
+                positiveCount = positiveStrings.Count;
+            }
+
+            if (negativeStrings.Count < stringCount - positiveCount)
+            {
+                positiveCount = stringCount - negativeStrings.Count;
+            }
 
             Debug.Log($"Positive Example: {positiveCount}");
             Debug.Log($"Negative Example: {stringCount - positiveCount}");

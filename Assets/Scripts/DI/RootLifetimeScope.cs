@@ -22,6 +22,7 @@ namespace Automan.DI
             builder.Register<TransitionManager>(Lifetime.Singleton);
             builder.Register<SoundManager>(Lifetime.Singleton);
             builder.Register<LifeModel>(Lifetime.Singleton);
+            builder.Register<TimeModel>(Lifetime.Singleton);
 
             builder.RegisterInstance<IReadOnlyDictionary<SoundManager.Sound, AudioClip>>(_soundDictionary);
 

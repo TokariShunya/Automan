@@ -21,7 +21,9 @@ namespace Automan.Result.Presenter
         private readonly TransitionManager _transitionManager;
         private readonly SoundManager _soundManager;
         private readonly LifeModel _lifeModel;
+        private readonly TimeModel _timeModel;
         private readonly AllClearButtonsView _allClearButtonsView;
+        private readonly ResultRecordView _resultRecordView;
         private readonly LifeView _lifeView;
         private readonly FrameView _frameView;
 
@@ -33,16 +35,20 @@ namespace Automan.Result.Presenter
         /// <param name="transitionManager">シーン遷移マネージャー</param>
         /// <param name="soundManager">サウンドマネージャー</param>
         /// <param name="lifeModel">ライフのModel</param>
+        /// <param name="timeModel">時間のModel</param>
         /// <param name="allClearButtonsView">オールクリア時のボタンのView</param>
+        /// <param name="resultRecordView">オールクリア時のボタンのView</param>
         /// <param name="lifeView">ライフのView</param>
         /// <param name="frameView">枠のView</param>
         [Inject]
-        public ResultPresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, AllClearButtonsView allClearButtonsView, LifeView lifeView, FrameView frameView)
+        public ResultPresenter(TransitionManager transitionManager, SoundManager soundManager, LifeModel lifeModel, TimeModel timeModel, AllClearButtonsView allClearButtonsView, ResultRecordView resultRecordView, LifeView lifeView, FrameView frameView)
         {
             _transitionManager = transitionManager;
             _soundManager = soundManager;
             _lifeModel = lifeModel;
+            _timeModel = timeModel;
             _allClearButtonsView = allClearButtonsView;
+            _resultRecordView = resultRecordView;
             _lifeView = lifeView;
             _frameView = frameView;
         }
@@ -54,6 +60,13 @@ namespace Automan.Result.Presenter
         {
             _lifeView.SetLife(_lifeModel.Life.CurrentValue);
 
+            var clearTime = _timeModel.Time.CurrentValue;
+            var errorCount = _lifeModel.InitialLife - _lifeModel.Life.CurrentValue;
+            var penalty = _timeModel.Penalty;
+            var recordTime = clearTime + penalty * errorCount;
+
+            _resultRecordView.SetRecords(clearTime, errorCount, penalty, recordTime);
+
             _soundManager.Play(SoundManager.Sound.AllClearJingle);
             _frameView.Shine();
 
@@ -64,6 +77,7 @@ namespace Automan.Result.Presenter
                     _soundManager.Play(SoundManager.Sound.Button);
                     _allClearButtonsView.Hide();
                     _lifeModel.Initialize();
+                    _timeModel.Initialize();
                     await _transitionManager.TransitionToAsync(1, Color.black);
                 })
                 .RegisterTo(_cancellationTokenSource.Token);

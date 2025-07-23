@@ -24,6 +24,7 @@ namespace Automan.DI
         [SerializeField] private StringViewFactory _stringViewFactory;
         [SerializeField] private AutomatonView _automatonView;
         [SerializeField] private LifeView _lifeView;
+        [SerializeField] private TimeView _timeView;
         [SerializeField] private FrameView _frameView;
         [SerializeField] private InformationTextView _informationTextView;
         [SerializeField] private Button _startButton;
@@ -42,6 +43,7 @@ namespace Automan.DI
             builder.RegisterComponent(_stringViewFactory);
             builder.RegisterComponent(_automatonView);
             builder.RegisterComponent(_lifeView);
+            builder.RegisterComponent(_timeView);
             builder.RegisterComponent(_frameView);
             builder.RegisterComponent(_informationTextView);
             builder.RegisterComponent(_startButton);
