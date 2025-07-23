@@ -15,8 +15,6 @@ namespace Automan.Game.Service
     {
         private readonly CharacterList _characterList;
 
-        private readonly int MaxAttempt = 100;
-
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -42,82 +40,102 @@ namespace Automan.Game.Service
 
             // オートマトンをランダムに生成
             AutomatonModel automaton = GenerateRandomAutomaton(stateCount, characters);
-            AutomatonString[] newStrings = new AutomatonString[stringCount];
 
-            HashSet<string> positiveStrings = new ();
-            HashSet<string> negativeStrings = new ();
+            // 正例の生成数
+            var positiveCount = stringCount / 2 + (stringCount % 2 == 1 ? Random.Range(0, 2) : 0);
 
-            var positiveCount = stringCount / 2;
-            var negativeCount = stringCount / 2;
+            List<(AutomatonCharacter[] Characters, bool[] CheckedPoints)> positiveStrings = new ();
+            List<(AutomatonCharacter[] Characters, bool[] CheckedPoints)> negativeStrings = new ();
 
-            if (positiveCount + negativeCount < stringCount)
+            foreach ((AutomatonCharacter[] s, bool[] points) in GenerateStrings(automaton, characters, stringLengthRange))
             {
-                if (Random.value < 0.5f)
+                if (points.Last())
                 {
-                    positiveCount++;
+                    positiveStrings.Add((s, points));
                 }
-                else
-                {
-                    negativeCount++;
+                else {
+                    negativeStrings.Add((s, points));
                 }
             }
 
-            var count = 0;
+            Debug.Log($"Positive Strings: {positiveStrings.Count}");
+            Debug.Log($"Negative Strings: {negativeStrings.Count}");
+            Debug.Log($"Total Strings: {positiveStrings.Count + negativeStrings.Count}");
 
-            for (int i = 0; i < MaxAttempt && count < stateCount; i++)
+            Debug.Log($"Positive Example: {positiveCount}");
+            Debug.Log($"Negative Example: {stringCount - positiveCount}");
+
+            List<AutomatonString> newStrings = new ();
+
+            // 正例を生成
+            while (positiveStrings.Count > 0 && newStrings.Count < positiveCount)
             {
-                var length = Random.Range(stringLengthRange.Min, stringLengthRange.Max + 1);
-                var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
-                
-                (string text, AutomatonString newString, bool isPositive) = GenerateRandomString(automaton, characters, length, checkedCharacterCount);
-
-                if (isPositive)
+                foreach ((AutomatonCharacter[] s, bool[] points) in positiveStrings.Shuffle())
                 {
-                    if (!positiveStrings.Contains(text))
+                    List<AutomatonCharacter> newCharacters = new ();
+                    var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
+                    HashSet<int> checkedIndexes = Enumerable.Range(0, points.Length - 1).Shuffle().Take(checkedCharacterCount - 1).Append(points.Length - 1).ToHashSet();
+                    string p = $"P: {(points[0] ? "+" : "-")}";
+
+                    if (checkedIndexes.Contains(0))
                     {
-                        if (positiveCount > 0)
-                        {
-                            newStrings[count++] = newString;
-                            positiveCount--;
-                            positiveStrings.Add(text);
-                        }
-                        
+                        newCharacters.Add(points[0] ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
                     }
-                }
-                else
-                {
-                    if (!negativeStrings.Contains(text))
+
+                    for (int i = 0; i < s.Length; i++)
                     {
-                        if (negativeCount > 0)
+                        newCharacters.Add(s[i]);
+
+                        if (checkedIndexes.Contains(i + 1))
                         {
-                            newStrings[count++] = newString;
-                            negativeCount--;
-                            negativeStrings.Add(text);
+                            newCharacters.Add(points[i + 1] ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
                         }
+
+                        p += $"{s[i]}{(points[i + 1] ? "+" : "-")}";
                     }
+
+                    newStrings.Add(new AutomatonString(newCharacters));
+                    Debug.Log(p);
+
+                    if (newStrings.Count >= positiveCount) break;
                 }
             }
-
-            while (count < stringCount)
+            
+            // 負例を生成
+            while (negativeStrings.Count > 0 && newStrings.Count < stringCount)
             {
-                var length = Random.Range(stringLengthRange.Min, stringLengthRange.Max + 1);
-                var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
-
-                (string text, AutomatonString newString, bool isPositive) = GenerateRandomString(automaton, characters, length, checkedCharacterCount);
-
-                if (isPositive)
+                foreach ((AutomatonCharacter[] s, bool[] points) in negativeStrings.Shuffle())
                 {
-                    if (positiveStrings.Contains(text)) continue;
-                }
-                else
-                {
-                    if (negativeStrings.Contains(text)) continue;
-                }
+                    List<AutomatonCharacter> newCharacters = new ();
+                    var checkedCharacterCount = Random.Range(checkedCharacterCountRange.Min, checkedCharacterCountRange.Max + 1);
+                    HashSet<int> checkedIndexes = Enumerable.Range(0, points.Length - 1).Shuffle().Take(checkedCharacterCount - 1).Append(points.Length - 1).ToHashSet();
+                    string n = $"N: {(points[0] ? "+" : "-")}";
 
-                newStrings[count++] = newString;
+                    if (checkedIndexes.Contains(0))
+                    {
+                        newCharacters.Add(points[0] ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
+                    }
+
+                    for (int i = 0; i < s.Length; i++)
+                    {
+                        newCharacters.Add(s[i]);
+
+                        if (checkedIndexes.Contains(i + 1))
+                        {
+                            newCharacters.Add(points[i + 1] ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
+                        }
+
+                        n += $"{s[i]}{(points[i + 1] ? "+" : "-")}";
+                    }
+
+                    newStrings.Add(new AutomatonString(newCharacters));
+                    Debug.Log(n);
+
+                    if (newStrings.Count >= stringCount) break;
+                }
             }
 
-            return newStrings;
+            return newStrings.ToArray();
         }
 
         private AutomatonModel GenerateRandomAutomaton(int stateCount, IEnumerable<AutomatonCharacter> characters)
@@ -126,31 +144,15 @@ namespace Automan.Game.Service
 
             // 受理状態をランダムに設定
             int[] positiveStates = Enumerable.Range(0, stateCount).Where(value => randomSet.Contains(value)).ToArray();
+            
+            Dictionary<(int State, AutomatonCharacter Character), int> transitions = new ();
 
-            List<(int State, AutomatonCharacter Character)> transitionKeys = new ();
-
-            // 遷移のキーを列挙
+            // 遷移をランダムに設定
             for (int i = 0; i < stateCount; i++)
             {
                 foreach (AutomatonCharacter character in characters)
                 {
-                    transitionKeys.Add((i, character));
-                }
-            }
-
-            (int State, AutomatonCharacter Character)[] shuffledKeys = transitionKeys.Shuffle().ToArray();
-            Dictionary<(int State, AutomatonCharacter Character), int> transitions = new ();
-
-            // 遷移をランダムに設定
-            for (int i = 0; i < shuffledKeys.Length; i++)
-            {
-                if (i < stateCount)
-                {
-                    transitions[shuffledKeys[i]] = i;
-                }
-                else
-                {
-                    transitions[shuffledKeys[i]] = Random.Range(0, stateCount);
+                    transitions[(i, character)] = Random.Range(0, stateCount);
                 }
             }
 
@@ -158,43 +160,45 @@ namespace Automan.Game.Service
             return new (stateCount, 0, positiveStates, transitions);
         }
 
-        private (string stringText, AutomatonString automatonString, bool isPositive) GenerateRandomString(AutomatonModel automaton, IList<AutomatonCharacter> characters, int length, int checkedCharacterCount)
+        private IEnumerable<(AutomatonCharacter[] Characters, bool[] CheckedPoints)> GenerateStrings(AutomatonModel automaton, IList<AutomatonCharacter> characters, (int Min, int Max) lengthRange)
         {
-            automaton.ResetState();
-
-            AutomatonCharacter[] randomCharacters = new AutomatonCharacter[length];
-
-            for (int j = 0; j < length; j++)
+            for (var length = lengthRange.Min; length <= lengthRange.Max; length++)
             {
-                randomCharacters[j] = characters[Random.Range(0, characters.Count)];
-            }
-
-            HashSet<int> checkedCharacters = Enumerable.Range(0, length).Shuffle().Take(checkedCharacterCount - 1).Append(length).ToHashSet();
-
-            AutomatonString randomString = new (randomCharacters);
-            string stringText = randomString.ToString();
-
-            var index = 0;
-            List<AutomatonCharacter> newCharacters = new ();
-
-            if (checkedCharacters.Contains(index++))
-            {
-                newCharacters.Add(automaton.IsInPositiveState ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
-            }
-
-            while (!randomString.IsEmpty)
-            {
-                newCharacters.Add(randomString.Peek());
-
-                automaton.Transition(randomString);
-
-                if (checkedCharacters.Contains(index++))
+                foreach (AutomatonCharacter[] s in GenerateRecursive(characters, length, Enumerable.Empty<AutomatonCharacter>()))
                 {
-                    newCharacters.Add(automaton.IsInPositiveState ? _characterList.PositiveCharacter : _characterList.NegativeCharacter);
+                    AutomatonString automatonString = new (s);
+                    List<bool> newPoints = new ();
+
+                    automaton.ResetState();
+
+                    newPoints.Add(automaton.IsInPositiveState);
+
+                    while (!automatonString.IsEmpty)
+                    {
+                        automaton.Transition(automatonString);
+                        newPoints.Add(automaton.IsInPositiveState);
+                    }
+
+                    yield return (s, newPoints.ToArray());
                 }
             }
+        }
 
-            return (stringText, new AutomatonString(newCharacters), automaton.IsInPositiveState);
+        private IEnumerable<AutomatonCharacter[]> GenerateRecursive(IList<AutomatonCharacter> characters, int length, IEnumerable<AutomatonCharacter> current)
+        {
+            if (current.Count() == length)
+            {
+                yield return current.ToArray();
+                yield break;
+            }
+
+            foreach (AutomatonCharacter character in characters)
+            {
+                foreach (AutomatonCharacter[] s in GenerateRecursive(characters, length, current.Append(character)))
+                {
+                    yield return s;
+                }
+            }
         }
     }
 }
